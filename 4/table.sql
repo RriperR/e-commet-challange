@@ -33,3 +33,12 @@ VALUES ('2025-01-01 11:50:00', 1111111, 'платье', 100),
        ('2025-01-01 15:40:00', 1111111, 'платье', 113),
        ('2025-01-01 15:50:00', 1111111, 'платье', 115),
        ('2025-01-01 16:00:00', 1111111, 'платье', 115);
+
+-- Получение приращения просмотров по каждому событию
+SELECT
+    dt,
+    campaign_id,
+    phrase,
+    views - lag(views, 1, views) OVER (PARTITION BY campaign_id, phrase ORDER BY dt) AS views_delta
+FROM phrases_views
+ORDER BY dt;

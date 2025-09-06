@@ -1,14 +1,27 @@
-from typing import Annotated
+from typing import Annotated, AsyncIterator
 
-import asyncpg
+import os
+from asyncpg import connect
+from asyncpg.connection import Connection
 import uvicorn
 from fastapi import APIRouter, FastAPI, Depends
 
 
-async def get_pg_connection() -> asyncpg.Connection: ...
+async def get_pg_connection() -> AsyncIterator[Connection]:
+    conn = await connect(
+        user=os.getenv("POSTGRES_USER", "postgres"),
+        password=os.getenv("POSTGRES_PASSWORD", "postgres"),
+        host=os.getenv("POSTGRES_HOST", "localhost"),
+        port=int(os.getenv("POSTGRES_PORT", 5432)),
+        database=os.getenv("POSTGRES_DB", "postgres"),
+    )
+    try:
+        yield conn
+    finally:
+        await conn.close()
 
 
-async def get_db_version(conn: Annotated[asyncpg.Connection, Depends(get_pg_connection)]):
+async def get_db_version(conn: Annotated[Connection, Depends(get_pg_connection)]):
     return await conn.fetchval("SELECT version()")
 
 
